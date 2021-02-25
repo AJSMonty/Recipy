@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import "../App.css";
 
@@ -40,14 +40,36 @@ if (localStorage.jwtToken) {
   }
 }
 
+const validateURI = (input: string): boolean => {
+  let isValid = false;
+
+  if (input && input.indexOf(':') > -1) {
+    const [key, type, id] = input.split(':');
+
+    if (key && type && type !== 'user' && id && id.length === 22) {
+      isValid = true;
+    }
+  }
+
+  return isValid;
+};
+
+const parseURIs = (input: string): string[] => {
+  const ids = input.split(',');
+
+  return ids.every((d) => validateURI(d)) ? ids : [];
+};
+
 function App() {
   const params = getHashParams();
   const token = params.access_token;
   const [loggedIn, setLoggedIn] = useState(token ? true : false);
+  const [playlists, setPlaylists] = useState([]);
+  const [URIs, setURIs] = useState(['spotify:album:51QBkcL7S3KYdXSSA0zM9R']);
+  const URIsInput = useRef(null);
 
   if (token) {
     spotifyApi.setAccessToken(token);
-    console.log(token);
   }
 
   function getHashParams() {
@@ -63,16 +85,25 @@ function App() {
     return hashParams;
   }
 
-  function getPlaylist() {
-    spotifyApi
-      .getUserPlaylists()
-      .then((response) => {
-        console.log("User playlists", response);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
+
+  const handleSubmitURIs = useCallback((e) => {
+  e.preventDefault();
+
+  if (URIsInput && URIsInput.current) {
+    setURIs(URIsInput.current.value);
   }
+}, []);
+
+  const handleClickURIs = useCallback((e) => {
+  e.preventDefault();
+  const { uris } = e.currentTarget.dataset;
+
+  setURIs(uris);
+
+  if (URIsInput && URIsInput.current) {
+    URIsInput.current.value = uris;
+  }
+  }, []);
 
   const [ingredients, setIngredients] = useState({});
   const selectedIngredients = Object.values(ingredients).reduce(
@@ -93,7 +124,6 @@ function App() {
   // Object.values ['value' 'value]
   // Object.keys ['key', 'key', 'key']
   // Object.entries [['key', 'value'], ['key', 'value]]
-  // console.log("selectedIngredients", selectedIngredients);
 
   return (
     <Provider store={store}>
@@ -107,6 +137,34 @@ function App() {
           <Switch>
             <PrivateRoute exact path="/dashboard" component={Dashboard} />
           </Switch>
+
+          <div className="spotify-player">
+            <SpotifyLogin />
+            <SpotifyPlayer
+              token={token}
+              uris={URIs}
+            />
+          </div>
+            <div className="playlist-buttons">
+
+              <button onClick={handleClickURIs} data-uris="spotify:playlist:0gUutpl4Vqbbh9gHFKZwX1">
+              All American
+              </button>
+              <button onClick={handleClickURIs} data-uris="spotify:playlist:4MsR10XAYWsDCSrP1DhrUJ">
+              French
+              </button>
+              <button onClick={handleClickURIs} data-uris="spotify:playlist:0iuKmZRRdh8zvFjmMKWjFg">
+              Latin American
+              </button>
+              <button onClick={handleClickURIs} data-uris="spotify:playlist:6wADQ2Pq08RZvEEO7D8Ncn">
+              Oriental
+              </button>
+              <button onClick={handleClickURIs} data-uris="spotify:playlist:2YTGWJIg1z2eJaLVv9QsSH">
+              Italian
+              </button>
+
+            </div>
+
           <IngredientList
             ingredients={ingredients}
             setIngredients={setIngredients}
