@@ -6,7 +6,7 @@
   "scripts": {
     "client-install": "npm install --prefix client",
     "test": "export NODE_ENV=test && jasmine",
-    "start": " node server.js",
+    "start": "concurrently \"npm run server\" \"npm run client\" \"npm run spotify-start\"",
     "server": "nodemon server.js",
     "dev-start": "export NODE_ENV=development && node server.js",
     "start-watch": "nodemon server.js",
