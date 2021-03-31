@@ -4,6 +4,7 @@
   "description": "## Spec",
   "main": "server.js",
   "scripts": {
+    "build": "npm install && concurrently \"npm sun client-install\"",
     "client-install": "npm install --prefix client",
     "test": "export NODE_ENV=test && jasmine",
     "start": "concurrently \"npm run server\" \"npm run client\" \"npm run spotify-start\"",
